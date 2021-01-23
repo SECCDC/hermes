@@ -26,50 +26,31 @@ import (
 	"fmt"
 	"net/http"
 
+	"hermes/model"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-type Config struct {
-	DBUser string
-	DBPass string
-	DBAddr string
-	DBName string
+func getProductsFromDB(db *gorm.DB) ([]model.Product, error) {
+	var products []model.Product
+
+	res := db.Find(&products)
+	if res.Error != nil {
+		fmt.Println(res.Error)
+	}
+
+	return products, res.Error
 }
 
-type Server struct {
-	Router *gin.Engine
-	DB     *gorm.DB
-}
-
-func Migrate(c Config) {
-	fmt.Println("Running migrations...")
-	err := dbInit(c.DBUser, c.DBPass, c.DBAddr, c.DBName)
+func (s *Server) listProducts(c *gin.Context) {
+	products, err := getProductsFromDB(s.DB)
 	if err != nil {
-		fmt.Println("Encountered errors while migrating:")
-		fmt.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"reason": "Unable to retrieve product list. Please try again later.",
+		})
 		return
 	}
 
-	fmt.Println("Migrations executed successfully!")
-}
-
-func Run(c Config) {
-	fmt.Println("Starting Hermes...")
-	s := Server{
-		Router: gin.Default(),
-		DB:     dbConnect(c.DBUser, c.DBPass, c.DBAddr, c.DBName),
-	}
-
-	s.Router.GET("/healthz", s.healthCheck)
-	s.Router.GET("/api/v1/products", s.listProducts)
-	s.Router.Run()
-
-	defer fmt.Println("Goodbye!")
-}
-
-func (s *Server) healthCheck(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
-	})
+	c.JSON(http.StatusOK, products)
 }
