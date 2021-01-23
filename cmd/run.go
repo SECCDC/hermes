@@ -16,8 +16,20 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"hermes/hermes"
+)
+
+var (
+	dbUser string
+	dbPass string
+	dbAddr string
+	dbName string
 )
 
 // runCmd represents the run command
@@ -25,20 +37,36 @@ var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Start hermes webserver",
 	Run: func(cmd *cobra.Command, args []string) {
-		hermes.Run()
+		if viper.GetString("dbPass") == "" {
+			fmt.Println("Password not provided. Exiting!")
+			os.Exit(2)
+		}
+		c := hermes.Config{
+			DBUser: viper.GetString("dbUser"),
+			DBPass: viper.GetString("dbPass"),
+			DBAddr: viper.GetString("dbAddr"),
+			DBName: viper.GetString("dbName"),
+		}
+		hermes.Run(c)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(runCmd)
 
-	// Here you will define your flags and configuration settings.
+	runCmd.PersistentFlags().StringVarP(&dbUser, "dbUser", "", dbUser, "database username")
+	viper.BindPFlag("dbUser", runCmd.PersistentFlags().Lookup("dbUser"))
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// runCmd.PersistentFlags().String("foo", "", "A help for foo")
+	runCmd.PersistentFlags().StringVarP(&dbPass, "dbPass", "", dbPass, "database password")
+	viper.BindPFlag("dbPass", runCmd.PersistentFlags().Lookup("dbPass"))
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	runCmd.PersistentFlags().StringVarP(&dbAddr, "dbAddr", "", dbAddr, "database address")
+	viper.BindPFlag("dbAddr", runCmd.PersistentFlags().Lookup("dbAddr"))
+
+	runCmd.PersistentFlags().StringVarP(&dbName, "dbName", "", dbName, "database to use. Will attempt to create one if it does not exist.")
+	viper.BindPFlag("dbName", runCmd.PersistentFlags().Lookup("dbName"))
+
+	viper.SetDefault("dbUser", "root")
+	viper.SetDefault("dbAddr", "127.0.0.1:3306")
+	viper.SetDefault("dbName", "hermes")
 }
