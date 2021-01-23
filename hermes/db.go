@@ -20,15 +20,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package model
+package hermes
 
 import (
+	// stdlib
+	"fmt"
+	"os"
+
+	// internal
+	"hermes/model"
+
+	// external
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-type Product struct {
-	gorm.Model
-	Name        string
-	Price       float64
-	Description string
+func dbInit(user, pass, address, dbName string) error {
+	return dbCreate(user, pass, address, dbName).AutoMigrate(&model.Product{})
+}
+
+func dbCreate(user, pass, address, dbName string) *gorm.DB {
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", user, pass, address)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		fmt.Println("Unable to connect to database:")
+		fmt.Println(err)
+		os.Exit(3)
+	}
+
+	return db.Raw(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName))
+}
+
+func dbConnect(user, pass, address, dbName string) *gorm.DB {
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, pass, address, dbName)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	return db
 }

@@ -53,20 +53,4 @@ var runCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-
-	runCmd.PersistentFlags().StringVarP(&dbUser, "dbUser", "", dbUser, "database username")
-	viper.BindPFlag("dbUser", runCmd.PersistentFlags().Lookup("dbUser"))
-
-	runCmd.PersistentFlags().StringVarP(&dbPass, "dbPass", "", dbPass, "database password")
-	viper.BindPFlag("dbPass", runCmd.PersistentFlags().Lookup("dbPass"))
-
-	runCmd.PersistentFlags().StringVarP(&dbAddr, "dbAddr", "", dbAddr, "database address")
-	viper.BindPFlag("dbAddr", runCmd.PersistentFlags().Lookup("dbAddr"))
-
-	runCmd.PersistentFlags().StringVarP(&dbName, "dbName", "", dbName, "database to use. Will attempt to create one if it does not exist.")
-	viper.BindPFlag("dbName", runCmd.PersistentFlags().Lookup("dbName"))
-
-	viper.SetDefault("dbUser", "root")
-	viper.SetDefault("dbAddr", "127.0.0.1:3306")
-	viper.SetDefault("dbName", "hermes")
 }

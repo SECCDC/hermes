@@ -58,16 +58,25 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hermes.yaml)")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// All your args are belong to Viper
+	runCmd.PersistentFlags().StringVarP(&dbUser, "dbUser", "", dbUser, "database username")
+	viper.BindPFlag("dbUser", runCmd.PersistentFlags().Lookup("dbUser"))
+
+	rootCmd.PersistentFlags().StringVarP(&dbPass, "dbPass", "", dbPass, "database password")
+	viper.BindPFlag("dbPass", runCmd.PersistentFlags().Lookup("dbPass"))
+
+	rootCmd.PersistentFlags().StringVarP(&dbAddr, "dbAddr", "", dbAddr, "database address")
+	viper.BindPFlag("dbAddr", runCmd.PersistentFlags().Lookup("dbAddr"))
+
+	rootCmd.PersistentFlags().StringVarP(&dbName, "dbName", "", dbName, "database to use")
+	viper.BindPFlag("dbName", runCmd.PersistentFlags().Lookup("dbName"))
+
+	viper.SetDefault("dbUser", "root")
+	viper.SetDefault("dbAddr", "127.0.0.1:3306")
+	viper.SetDefault("dbName", "hermes")
+
 }
 
 // initConfig reads in config file and ENV variables if set.
