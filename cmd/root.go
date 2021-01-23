@@ -61,17 +61,17 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hermes.yaml)")
 
 	// All your args are belong to Viper
-	runCmd.PersistentFlags().StringVarP(&dbUser, "dbUser", "", dbUser, "database username")
-	viper.BindPFlag("dbUser", runCmd.PersistentFlags().Lookup("dbUser"))
+	rootCmd.PersistentFlags().StringVarP(&dbUser, "dbUser", "", dbUser, "database username")
+	viper.BindPFlag("dbUser", rootCmd.PersistentFlags().Lookup("dbUser"))
 
 	rootCmd.PersistentFlags().StringVarP(&dbPass, "dbPass", "", dbPass, "database password")
-	viper.BindPFlag("dbPass", runCmd.PersistentFlags().Lookup("dbPass"))
+	viper.BindPFlag("dbPass", rootCmd.PersistentFlags().Lookup("dbPass"))
 
 	rootCmd.PersistentFlags().StringVarP(&dbAddr, "dbAddr", "", dbAddr, "database address")
-	viper.BindPFlag("dbAddr", runCmd.PersistentFlags().Lookup("dbAddr"))
+	viper.BindPFlag("dbAddr", rootCmd.PersistentFlags().Lookup("dbAddr"))
 
 	rootCmd.PersistentFlags().StringVarP(&dbName, "dbName", "", dbName, "database to use")
-	viper.BindPFlag("dbName", runCmd.PersistentFlags().Lookup("dbName"))
+	viper.BindPFlag("dbName", rootCmd.PersistentFlags().Lookup("dbName"))
 
 	viper.SetDefault("dbUser", "root")
 	viper.SetDefault("dbAddr", "127.0.0.1:3306")

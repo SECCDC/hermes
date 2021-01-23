@@ -36,17 +36,18 @@ import (
 )
 
 func dbInit(user, pass, address, dbName string) error {
-	return dbCreate(user, pass, address, dbName).AutoMigrate(&model.Product{})
+	db := dbCreate(user, pass, address, dbName)
+	if db.Error != nil {
+		fmt.Println(db.Error)
+		fmt.Println("Could not create database")
+		os.Exit(3)
+	}
+
+	return dbConnect(user, pass, address, dbName).AutoMigrate(&model.Product{})
 }
 
 func dbCreate(user, pass, address, dbName string) *gorm.DB {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", user, pass, address)
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		fmt.Println("Unable to connect to database:")
-		fmt.Println(err)
-		os.Exit(3)
-	}
+	db := dbConnect(user, pass, address, "")
 
 	return db.Raw(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName))
 }
@@ -57,5 +58,6 @@ func dbConnect(user, pass, address, dbName string) *gorm.DB {
 	if err != nil {
 		panic(err)
 	}
+
 	return db
 }
