@@ -20,15 +20,37 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package model
+package cmd
 
 import (
-	"gorm.io/gorm"
+	"fmt"
+	"os"
+
+	"hermes/hermes"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-type Product struct {
-	gorm.Model
-	Name        string
-	Price       float64
-	Description string
+// migrateCmd represents the migrate command
+var migrateCmd = &cobra.Command{
+	Use:   "migrate",
+	Short: "Prepare database and run migrations",
+	Run: func(cmd *cobra.Command, args []string) {
+		if viper.GetString("dbPass") == "" {
+			fmt.Println("Password not provided. Exiting!")
+			os.Exit(2)
+		}
+		c := hermes.Config{
+			DBUser: viper.GetString("dbUser"),
+			DBPass: viper.GetString("dbPass"),
+			DBAddr: viper.GetString("dbAddr"),
+			DBName: viper.GetString("dbName"),
+		}
+		hermes.Migrate(c)
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(migrateCmd)
 }
