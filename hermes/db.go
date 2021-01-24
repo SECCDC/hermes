@@ -43,7 +43,7 @@ func dbInit(user, pass, address, dbName string) error {
 		os.Exit(3)
 	}
 
-	return dbConnect(user, pass, address, dbName).AutoMigrate(&model.Product{})
+	return dbConnect(user, pass, address, dbName).AutoMigrate(&model.Product{}, &model.Order{}, &model.OrderMapping{})
 }
 
 func dbCreate(user, pass, address, dbName string) *gorm.DB {

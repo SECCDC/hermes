@@ -25,52 +25,67 @@ package hermes
 import (
 	"fmt"
 	"net/http"
+	"time"
+
+	"hermes/model"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-type Config struct {
-	DBUser string
-	DBPass string
-	DBAddr string
-	DBName string
+func createOrder(db *gorm.DB, productIDs []int) (model.Order, error) {
+	var products []model.Product
+
+	// Lookup the product and make sure it exists
+	q1 := db.Find(&products, productIDs)
+	if q1.Error != nil {
+		fmt.Println(q1.Error)
+		return model.Order{}, q1.Error
+	}
+
+	//TODO: handle requested products that are not in the DB
+	// Create and insert the order
+	order := model.Order{
+		TimeReceived: time.Now(),
+	}
+	q2 := db.Create(&order)
+	if q2.Error != nil {
+		fmt.Println(q2.Error)
+		return order, q2.Error
+	}
+
+	for _, product := range products {
+		res := db.Create(&model.OrderMapping{
+			OrderID:   order.ID,
+			ProductID: product.ID,
+		})
+		if res.Error != nil {
+			fmt.Println(res.Error)
+		}
+	}
+	return order, q2.Error
 }
 
-type Server struct {
-	Router *gin.Engine
-	DB     *gorm.DB
-}
+func (s *Server) receiveOrder(c *gin.Context) {
+	var request model.OrderRequest
 
-func Migrate(c Config) {
-	fmt.Println("Running migrations...")
-	err := dbInit(c.DBUser, c.DBPass, c.DBAddr, c.DBName)
-	if err != nil {
-		fmt.Println("Encountered errors while migrating:")
-		fmt.Println(err)
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"reason": "Order request is malformed. Please try again.",
+		})
 		return
 	}
 
-	fmt.Println("Migrations executed successfully!")
-}
-
-func Run(c Config) {
-	fmt.Println("Starting Hermes...")
-	s := Server{
-		Router: gin.Default(),
-		DB:     dbConnect(c.DBUser, c.DBPass, c.DBAddr, c.DBName),
+	order, err := createOrder(s.DB, request.IDs)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"reason": "Failed to create order.",
+		})
+		return
 	}
 
-	s.Router.GET("/healthz", s.healthCheck)
-	s.Router.GET("/api/v1/products", s.listProducts)
-	s.Router.POST("/api/v1/order", s.receiveOrder)
-	s.Router.Run()
-
-	defer fmt.Println("Goodbye!")
-}
-
-func (s *Server) healthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
+		"status": "created",
+		"id":     order.ID,
 	})
 }
