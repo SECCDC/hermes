@@ -20,57 +20,39 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package hermes
+package model
 
 import (
-	"fmt"
-	"net/http"
+	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/satori/go.uuid"
 	"gorm.io/gorm"
 )
 
-type Config struct {
-	DBUser string
-	DBPass string
-	DBAddr string
-	DBName string
+type Order struct {
+	ID           uuid.UUID `gorm:"type:char(36);primary_key"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    *time.Time `sql:"index"`
+	TimeReceived time.Time
 }
 
-type Server struct {
-	Router *gin.Engine
-	DB     *gorm.DB
+// Maps Orders and Products
+type OrderMapping struct {
+	gorm.Model
+	OrderID   uuid.UUID
+	ProductID uint
 }
 
-func Migrate(c Config) {
-	fmt.Println("Running migrations...")
-	err := dbInit(c.DBUser, c.DBPass, c.DBAddr, c.DBName)
-	if err != nil {
-		fmt.Println("Encountered errors while migrating:")
-		fmt.Println(err)
-		return
-	}
+// BeforeCreate will set a UUID rather than numeric ID.
+func (order *Order) BeforeCreate(tx *gorm.DB) error {
+	var err error
+	uuid := uuid.Must(uuid.NewV4(), err)
 
-	fmt.Println("Migrations executed successfully!")
+	tx.Statement.SetColumn("ID", uuid)
+	return nil
 }
 
-func Run(c Config) {
-	fmt.Println("Starting Hermes...")
-	s := Server{
-		Router: gin.Default(),
-		DB:     dbConnect(c.DBUser, c.DBPass, c.DBAddr, c.DBName),
-	}
-
-	s.Router.GET("/healthz", s.healthCheck)
-	s.Router.GET("/api/v1/products", s.listProducts)
-	s.Router.POST("/api/v1/order", s.receiveOrder)
-	s.Router.Run()
-
-	defer fmt.Println("Goodbye!")
-}
-
-func (s *Server) healthCheck(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
-	})
+type OrderRequest struct {
+	IDs []int
 }
